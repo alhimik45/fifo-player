@@ -1,0 +1,318 @@
+<html>
+<head>
+	<meta charset=utf-8 />
+	<script type="text/javascript" src="jquery.min.js"></script>
+	<script type="text/javascript" src="list.min.js"></script>
+	<script type="text/javascript" src="list.fuzzysearch.min.js"></script>
+	<script type="text/javascript">
+		var gui = require('nw.gui');
+		var win = gui.Window.get();
+		var fs = require('fs');
+		var spawn = require('child_process').spawn;
+		var s = require("settings").init();
+		var music = [];
+		var directory_watcher = null;
+		var current_player_process = null;
+		var current_file = "";
+		var current_dir = s.music_directory;
+		// Displays that mplayer is looped
+		var loop_enabled = false;
+		var list = null; // list object of list.js
+		/**
+		 * Returns array of filenames in given path
+		 * @param  {string} path - directory to list files
+		 * @return {string[]}
+		 */
+		function music_list (path) {
+			return $(fs.readdirSync(path)).filter(function (i,file) {
+				return !fs.lstatSync(path+file).isDirectory();
+			}).map(function (i, file) {
+				return path+file;
+			}).get();
+		}
+		/**
+		 * Writes current song name to file
+		 * @param {string} text - string to write
+		 */
+		function write_song_name (text) {
+			if(s.output_file != ""){
+				var fd =  fs.openSync(s.output_file, "w");
+				fs.writeSync(fd, crop_filename(text));
+			}
+		}
+		/**
+		 * Converts full filename to cropped version to output it
+		 * @param  {string} filename - full filename
+		 * @return {string}          - cropped filename
+		 */
+		function crop_filename (filename) {
+			if(filename.length<40)
+				return filename;
+			else
+				return filename.substr(0,40)+"...";
+		}
+		/**
+		 * Starts watch to given dir_path for update music list
+		 * resets music to actial state
+		 * @param  {string} dir_path - path to directory for watching
+		 */
+		function init_fs (dir_path) {
+			current_dir = dir_path = dir_path.replace(/\/+$/, "") + "/";
+			if(directory_watcher) directory_watcher.close();
+			fs.writeFileSync(s.current_directory_storage, dir_path);
+			music = music_list(dir_path);
+			directory_watcher = fs.watch(dir_path, function () {
+				music = music_list(dir_path);
+			});
+		}
+		/**
+		 * Sends command to mplayer slave fifo
+		 * @param  {string} cmd - mplayer command
+		 */
+		function command (cmd) {
+			var fd =  fs.openSync(s.mplayer_fifo, "w");
+			fs.writeSync(fd, cmd + "\n");
+		}
+		/**
+		 * Starts mplayer for playing given file
+		 * Sets global current_player_process to ChildProcess object
+		 * and loop_enabled to false
+		 * @param  {string} filename
+		 */
+		function play (file_path) {
+			loop_enabled = false;
+			filename = file_path.split("/").pop();
+			current_file = filename;
+			// Write current song to sound bar
+			write_song_name(filename);
+			var play_option;
+			// Check if file is playlist
+			if(filename.split(".").pop() == "m3u"){
+				play_option = ["-playlist", file_path];
+			}else {
+				play_option = [file_path];
+			}
+			if(current_player_process) current_player_process.kill('SIGINT');
+			current_player_process = spawn("mplayer", 
+				["-input", "file=" + s.mplayer_fifo,
+				"-really-quiet", "-slave"]
+				.concat(s.mplayer_options)
+				.concat(play_option));
+			current_player_process.on('exit', function (code,signal) {
+				if(code == null || code == 0){
+					next();
+				}
+			});
+		}
+		/**
+		 * Plays random song from music list
+		 */
+		function next () {
+			if(music.length > 0)
+				play(music[Math.floor(Math.random()*music.length)]);
+			else{
+				init_fs(s.music_directory);
+				if(music.length > 0)
+					play(music[Math.floor(Math.random()*music.length)]);
+			}
+		}
+		var commands =   
+		{"next": next,
+		"pause": function () {
+			if(current_player_process)
+				command("pause");
+			else
+				next();
+		},
+		"loop": function () {
+			if(loop_enabled){
+    			command("loop -1");
+    			write_song_name(current_file);
+			}
+    		else{
+    			command("loop 1");
+    			write_song_name("[looped] " + current_file);
+    		}
+    		loop_enabled = !loop_enabled;
+		},
+		"play-file": function () {
+			show_select_widow(play, current_dir, function (e) {return !e.isDirectory()});
+		},
+		"seek-forward": function () {
+			command("seek " + s.seek_seconds + " 0");
+		},
+		"seek-backward": function () {
+			command("seek " + (-s.seek_seconds) + " 0");
+		},
+		"increase-volume": function () {
+			command("volume 100");
+		},
+		"decrease-volume": function () {
+			command("volume 0");
+		},
+		"change-directory": function () {
+			show_select_widow(function (d) {
+				init_fs(d);
+				next();
+			}, s.base_directory, function (e) {return e.isDirectory()});
+		}};
+		function close_window () {
+			win.hide();
+			$("#search-field").val("");
+			list.search();
+		}
+		/**
+		 * Sets reaction on selecting element of list:
+		 * call fn with path+selected_item argument
+		 * @param {Function} fn
+		 * @param {string} path
+		 */
+		function set_select_action (fn, path) {
+			$('#file-list').off('click', '.name');
+			$('#file-list').on('click', '.name', function() {
+				fn(path + $(this).text());
+				close_window();
+			});
+			$("#search-field").unbind('keypress');
+			$("#search-field").keypress(function(e) {
+				if(e.which == 13){
+					var items_found = list.get().filter(function (el) { return el.matching(); });
+					if(items_found.length == 0) {
+						fn($(this).val());
+					}else {
+						fn(path + items_found[0].values().name);
+					}
+					close_window();
+				}
+			});
+		}
+		/**
+		 * Shows window for selecting 
+		 * and resets displayed list based on filter_fn
+		 * @param  {Function}
+		 * @param  {string}
+		 * @param  {Function}
+		 */
+		function show_select_widow (fn, path, filter_fn) {
+			list.clear();
+			$("#search-field").text("");
+			fs.readdir(path,function (err, files) {
+				files.forEach(function (file) {
+					if(filter_fn(fs.lstatSync(path+file))){
+						list.add({name: file});
+					}
+				});
+			});
+			win.show();
+			set_select_action(fn, path);
+			win.setPosition("mouse");
+			$("#search-field").focus();
+		}
+		
+		$(function () {
+			list = new List('file-list', { 
+				valueNames: ['name'], 
+				plugins: [ ListFuzzySearch() ] 
+			});
+			win.on('close', function() {
+				this.hide();
+			});
+			$(".close-button").click(function () {
+				win.hide();
+			});
+			init_fs(s.music_directory);
+			var reader = function () {
+				fs.readFile(s.input_fifo, 'utf8', function (err, data) {
+					data = data.trim();
+					if(commands[data]) commands[data]();
+					reader();
+				})
+			}
+			reader();
+		});
+	</script>
+	<style type="text/css">
+		html {
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+		body {
+			font-family: Sans;
+			height: 320px;
+			overflow: hidden;
+			margin: 0;
+			padding: 0;
+			background-color: #c1c48b;
+			font-size: 14px;
+			-webkit-app-region: drag;
+			border: 1px solid #81654f;
+		}
+		#search-field {
+			font-family: Sans;
+			font-size: 14px;
+			border: 1px solid #81654f;
+			background-color: #c1c48b;
+			width: 90%;
+		}
+		p,li {
+			margin: 0;
+			-webkit-user-select: none;
+			-webkit-app-region: no-drag;
+			white-space: nowrap ;
+		}
+		p:hover {
+			background-color: #81654f;
+			cursor: pointer;
+		}
+		.center{
+			text-align: center;
+		}
+		.close-button{
+			margin-top: 5px;
+			margin-left: 5px;
+			background-color: #81654f;
+			width: 15px;
+			height: 15px;
+			border-radius: 30px;
+			position: absolute;
+			cursor:pointer;
+			padding-left: 3px;
+			padding-bottom: 1px;
+			border: 1px solid #000;
+			-webkit-user-select: none;
+			-webkit-app-region: no-drag;
+		}
+		ul {
+			list-style-type: none;
+			margin-left: 5%;
+			padding: 0;
+			height: 85%;
+			overflow-y: auto;
+			overflow-x: hidden;
+		}
+		::-webkit-scrollbar {
+			width: 10px;
+		}
+		::-webkit-scrollbar-track {
+			background:#c1c48b;
+			border: 1px solid #81654f;
+		}
+		::-webkit-scrollbar-thumb {
+			background:#81654f;
+			border: 1px solid #81654f;
+		}	
+	</style>
+</head>
+<body>
+	<div class="close-button">&times;</div>
+	<div id="file-list">
+		<div class="center">
+			<input type="text" id="search-field" class="fuzzy-search" >
+		</div>
+		<ul class="list" id="file-list">
+			<li><p class="name"></p></li>
+		</ul>
+	</div>
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+	"music_directory": "/home/userr/music/all",
+	"base_directory": "/home/userr/music",
+	"output_file": "/tmp/.fifo-player-song"
+}
