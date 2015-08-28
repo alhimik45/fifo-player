@@ -1,7 +1,6 @@
 var fs = require('fs');
 var extend = require('util')._extend;
 var spawn = require('child_process').spawn;
-var SETTINGS_FILE =  process.env.PWD + '/player-config.json';
 var DEFAULT_SETTINGS = {music_directory: ".",
 						base_directory: ".", // in which directory start change-directory command
 						mplayer_options: [], // additional options for mplayer
@@ -14,10 +13,10 @@ var DEFAULT_SETTINGS = {music_directory: ".",
 						mplayer_fifo: "/tmp/.mplayer-input",
 						input_fifo: "/tmp/.fifo-player-input"
 					}
-exports.init = function () {
+exports.init = function (file) {
 	var imported_settings = {};
 	try{
-		imported_settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))
+		imported_settings = JSON.parse(fs.readFileSync(file, 'utf8'))
 	}catch(e){
 		console.log(e.message, "Fallback to default settings");
 	}

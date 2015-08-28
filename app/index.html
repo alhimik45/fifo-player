@@ -9,7 +9,7 @@
 		var win = gui.Window.get();
 		var fs = require('fs');
 		var spawn = require('child_process').spawn;
-		var s = require("settings").init();
+		var s = require("./settings").init(gui.App.argv[0]);
 		var music = [];
 		var directory_watcher = null;
 		var current_player_process = null;
