@@ -37,7 +37,7 @@
 		function write_song_name (text) {
 			if(s.output_file != ""){
 				var fd =  fs.openSync(s.output_file, "w");
-				fs.writeSync(fd, crop_filename(text));
+				fs.writeSync(fd, crop_filename(text)+"\n");
 			}
 		}
 		/**
