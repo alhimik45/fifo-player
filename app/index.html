@@ -18,6 +18,7 @@
 		// Displays that mplayer is looped
 		var loop_enabled = false;
 		var list = null; // list object of list.js
+		var out_music =  fs.openSync(s.output_file, "w");
 		/**
 		 * Returns array of filenames in given path
 		 * @param  {string} path - directory to list files
@@ -36,8 +37,7 @@
 		 */
 		function write_song_name (text) {
 			if(s.output_file != ""){
-				var fd =  fs.openSync(s.output_file, "w");
-				fs.writeSync(fd, crop_filename(text)+"\n");
+				fs.writeSync(out_music, crop_filename(text)+"\n");
 			}
 		}
 		/**
@@ -72,6 +72,7 @@
 		function command (cmd) {
 			var fd =  fs.openSync(s.mplayer_fifo, "w");
 			fs.writeSync(fd, cmd + "\n");
+			fs.closeSync(fd);
 		}
 		/**
 		 * Starts mplayer for playing given file
