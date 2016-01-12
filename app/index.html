@@ -78,11 +78,11 @@
 		 * Starts mplayer for playing given file
 		 * Sets global current_player_process to ChildProcess object
 		 * and loop_enabled to false
-		 * @param  {string} filename
+		 * @param  {string} file_path
 		 */
 		function play (file_path) {
 			loop_enabled = false;
-			filename = file_path.split("/").pop();
+			var filename = file_path.split("/").pop();
 			current_file = filename;
 			// Write current song to sound bar
 			write_song_name(filename);
@@ -109,12 +109,17 @@
 		 * Plays random song from music list
 		 */
 		function next () {
-			if(music.length > 0)
-				play(music[Math.floor(Math.random()*music.length)]);
-			else{
+			if(music.length == 0){
 				init_fs(s.music_directory);
-				if(music.length > 0)
-					play(music[Math.floor(Math.random()*music.length)]);
+			}
+			if(music.length > 0){
+				var i = 0;
+				do{
+					var new_music = music[Math.floor(Math.random()*music.length)];
+					var new_music_filename = new_music.split("/").pop();
+					++i;
+				}while(new_music_filename == current_file && i < 10);
+				play(new_music);
 			}
 		}
 		var commands =   
