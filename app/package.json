@@ -11,5 +11,6 @@
 		"position": "mouse",
 		"min_width": 10,
 		"min_height": 10
-	}
+	},
+	"js-flags": "--expose-gc"
 }

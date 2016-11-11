@@ -93,7 +93,8 @@
 			}else {
 				play_option = [file_path];
 			}
-			if(current_player_process) current_player_process.kill('SIGINT');
+			if(current_player_process) current_player_process.kill('SIGTERM');
+			global.gc();
 			current_player_process = spawn("mplayer", 
 				["-input", "file=" + s.mplayer_fifo,
 				"-really-quiet", "-slave"]
