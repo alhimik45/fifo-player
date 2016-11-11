@@ -115,9 +115,10 @@
 			}
 			if(music.length > 0){
 				var i = 0;
+				var new_music, new_music_filename;
 				do{
-					var new_music = music[Math.floor(Math.random()*music.length)];
-					var new_music_filename = new_music.split("/").pop();
+					new_music = music[Math.floor(Math.random()*music.length)];
+					new_music_filename = new_music.split("/").pop();
 					++i;
 				}while(new_music_filename == current_file && i < 10);
 				play(new_music);
