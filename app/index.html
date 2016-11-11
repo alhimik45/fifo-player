@@ -19,12 +19,16 @@
 		var loop_enabled = false;
 		var list = null; // list object of list.js
 		var out_music =  fs.openSync(s.output_file, "w");
+
+		var current_music_idx = -1;
+		var is_random_idx = true;
 		/**
 		 * Returns array of filenames in given path
 		 * @param  {string} path - directory to list files
 		 * @return {string[]}
 		 */
 		function music_list (path) {
+			current_music_idx = -1;
 			return $(fs.readdirSync(path)).filter(function (i,file) {
 				return !fs.lstatSync(path+file).isDirectory();
 			}).map(function (i, file) {
@@ -33,9 +37,17 @@
 		}
 		/**
 		 * Writes current song name to file
-		 * @param {string} text - string to write
 		 */
-		function write_song_name (text) {
+		function write_song_name () {
+			var text = current_file;
+			if(is_random_idx){
+				text = '[r] ' + text;
+			}else {
+				text = '[s] ' + text;
+			}
+			if(loop_enabled){
+				text = '[l] ' + text;
+			}
 			if(s.output_file != ""){
 				fs.writeSync(out_music, crop_filename(text)+"\n");
 			}
@@ -46,10 +58,10 @@
 		 * @return {string}          - cropped filename
 		 */
 		function crop_filename (filename) {
-			if(filename.length<40)
+			if(filename.length<60)
 				return filename;
 			else
-				return filename.substr(0,40)+"...";
+				return filename.substr(0,60)+"...";
 		}
 		/**
 		 * Starts watch to given dir_path for update music list
@@ -85,7 +97,7 @@
 			var filename = file_path.split("/").pop();
 			current_file = filename;
 			// Write current song to sound bar
-			write_song_name(filename);
+			write_song_name();
 			var play_option;
 			// Check if file is playlist
 			if(filename.split(".").pop() == "m3u"){
@@ -107,7 +119,18 @@
 			});
 		}
 		/**
-		 * Plays random song from music list
+		 * Return index of next playing song. It can be random or successive, depends on is_random_idx variable
+		 * @return {number} next index of song
+		 */
+		function next_idx(){
+			if(is_random_idx){
+				return Math.floor(Math.random()*music.length);
+			}else {
+				return (current_music_idx + 1) % music.length;
+			}
+		}
+		/**
+		 * Plays next song from music list
 		 */
 		function next () {
 			if(music.length == 0){
@@ -117,7 +140,8 @@
 				var i = 0;
 				var new_music, new_music_filename;
 				do{
-					new_music = music[Math.floor(Math.random()*music.length)];
+					current_music_idx = next_idx();
+					new_music = music[current_music_idx];
 					new_music_filename = new_music.split("/").pop();
 					++i;
 				}while(new_music_filename == current_file && i < 10);
@@ -135,13 +159,12 @@
 		"loop": function () {
 			if(loop_enabled){
     			command("loop -1");
-    			write_song_name(current_file);
 			}
     		else{
     			command("loop 1");
-    			write_song_name("[looped] " + current_file);
     		}
     		loop_enabled = !loop_enabled;
+    		write_song_name();
 		},
 		"play-file": function () {
 			show_select_widow(play, current_dir, function (e) {return !e.isDirectory()});
@@ -157,6 +180,10 @@
 		},
 		"decrease-volume": function () {
 			command("volume 0");
+		},
+		"change-random": function () {
+			is_random_idx = !is_random_idx;
+			write_song_name();
 		},
 		"change-directory": function () {
 			show_select_widow(function (d) {
