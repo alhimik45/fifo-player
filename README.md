@@ -28,6 +28,7 @@ Available commands:
  - `loop` - infinitely play current song / disable infinite loop
  - `play-file` - shows window to select what file to play
  - `change-folder` - shows window to select music folder
+ - `change-random` - switch beetween random and successive selecting of next song
  - `seek-forward` - seek forward to `seek_seconds` seconds
  - `seek-forward` - seek backward to `seek_seconds` seconds
  - `increase-volume`
