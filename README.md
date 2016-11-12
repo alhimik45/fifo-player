@@ -55,6 +55,7 @@ Key Mod3-z
 	echo play-file > $PLAYER_FIFO_IN &
 ```
 
-Copyright © 2015 Alexey Kolpakov
+License
+---------
 
-Distributed under DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE.
+This software is licensed under the [MIT license](LICENSE).
