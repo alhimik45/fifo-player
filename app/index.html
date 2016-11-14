@@ -169,14 +169,16 @@
 			}
 		},
 		"loop": function () {
-			if(loop_enabled){
-    			command("loop -1");
-			}
-    		else{
-    			command("loop 1");
-    		}
-    		loop_enabled = !loop_enabled;
-    		write_song_name();
+			if(current_player_process){
+				if(loop_enabled){
+	    			command("loop -1");
+				}
+	    		else{
+	    			command("loop 1");
+	    		}
+	    		loop_enabled = !loop_enabled;
+	    		write_song_name();
+	    	}
 		},
 		"play-file": function () {
 			show_select_widow(play, current_dir, function (e) {return !e.isDirectory()});
