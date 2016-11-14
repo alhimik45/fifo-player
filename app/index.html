@@ -22,6 +22,8 @@
 
 		var current_music_idx = -1;
 		var is_random_idx = true;
+
+		var playing = false;
 		/**
 		 * Returns array of filenames in given path
 		 * @param  {string} path - directory to list files
@@ -40,6 +42,11 @@
 		 */
 		function write_song_name () {
 			var text = current_file;
+			if(playing){
+				text = '[>] ' + text;
+			}else {
+				text = '[||] ' + text;
+			}
 			if(is_random_idx){
 				text = '[r] ' + text;
 			}else {
@@ -93,6 +100,7 @@
 		 * @param  {string} file_path
 		 */
 		function play (file_path) {
+			playing = true;
 			loop_enabled = false;
 			var filename = file_path.split("/").pop();
 			current_file = filename;
@@ -151,10 +159,14 @@
 		var commands =   
 		{"next": next,
 		"pause": function () {
-			if(current_player_process)
+			if(current_player_process){
 				command("pause");
-			else
+				playing = !playing;
+				write_song_name();
+			}
+			else{
 				next();
+			}
 		},
 		"loop": function () {
 			if(loop_enabled){
