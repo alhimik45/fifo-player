@@ -117,7 +117,10 @@
 				"-really-quiet", "-slave"]
 				.concat(s.mplayer_options)
 				.concat(play_option));
-			current_player_process.on('exit', next);
+			current_player_process.on('exit', function (code, signal) {
+				if(signal == "SIGKILL")
+					next();
+			});
 		}
 		/**
 		 * Return index of next playing song. It can be random or successive, depends on is_random_idx variable
@@ -149,14 +152,15 @@
 				play(new_music);
 			}
 		}
-		var commands =   
-		{"next": function () {
+		function go_next () {
 			if(current_player_process){
-				current_player_process.kill('SIGTERM');
+				current_player_process.kill('SIGKILL');
 			} else {
 				next();
 			}
-		},
+		}
+		var commands =   
+		{"next": go_next,
 		"pause": function () {
 			if(current_player_process){
 				command("pause");
@@ -178,7 +182,10 @@
 	    	}
 		},
 		"play-file": function () {
-			show_select_widow(play, current_dir, function (e) {return !e.isDirectory()});
+			show_select_widow(function (file) {
+				current_player_process.kill('SIGTERM');
+				play(file);
+			}, current_dir, function (e) {return !e.isDirectory()});
 		},
 		"seek-forward": function () {
 			command("seek " + s.seek_seconds + " 0");
@@ -199,7 +206,7 @@
 		"change-directory": function () {
 			show_select_widow(function (d) {
 				init_fs(d);
-				next();
+				go_next();
 			}, s.base_directory, function (e) {return e.isDirectory()});
 		}};
 		function close_window () {
