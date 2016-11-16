@@ -112,18 +112,12 @@
 			}else {
 				play_option = [file_path];
 			}
-			if(current_player_process) current_player_process.kill('SIGTERM');
-			global.gc();
 			current_player_process = spawn("mplayer", 
 				["-input", "file=" + s.mplayer_fifo,
 				"-really-quiet", "-slave"]
 				.concat(s.mplayer_options)
 				.concat(play_option));
-			current_player_process.on('exit', function (code,signal) {
-				if(code == null || code == 0){
-					next();
-				}
-			});
+			current_player_process.on('exit', next);
 		}
 		/**
 		 * Return index of next playing song. It can be random or successive, depends on is_random_idx variable
@@ -156,14 +150,19 @@
 			}
 		}
 		var commands =   
-		{"next": next,
+		{"next": function () {
+			if(current_player_process){
+				current_player_process.kill('SIGTERM');
+			} else {
+				next();
+			}
+		},
 		"pause": function () {
 			if(current_player_process){
 				command("pause");
 				playing = !playing;
 				write_song_name();
-			}
-			else{
+			} else {
 				next();
 			}
 		},
@@ -171,8 +170,7 @@
 			if(current_player_process){
 				if(loop_enabled){
 	    			command("loop -1");
-				}
-	    		else{
+				} else {
 	    			command("loop 1");
 	    		}
 	    		loop_enabled = !loop_enabled;
