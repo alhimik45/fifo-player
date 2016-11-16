@@ -118,7 +118,7 @@
 				.concat(s.mplayer_options)
 				.concat(play_option));
 			current_player_process.on('exit', function (code, signal) {
-				if(signal == "SIGKILL")
+				if(signal === "SIGKILL" || code === 0)
 					next();
 			});
 		}
