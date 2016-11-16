@@ -18,7 +18,6 @@
 		// Displays that mplayer is looped
 		var loop_enabled = false;
 		var list = null; // list object of list.js
-		var out_music =  fs.openSync(s.output_file, "w");
 
 		var current_music_idx = -1;
 		var is_random_idx = true;
@@ -56,7 +55,7 @@
 				text = '[l] ' + text;
 			}
 			if(s.output_file != ""){
-				fs.writeSync(out_music, crop_filename(text)+"\n");
+				fs.writeFileSync(s.output_file, crop_filename(text)+"\n");
 			}
 		}
 		/**
