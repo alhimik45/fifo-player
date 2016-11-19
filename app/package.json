@@ -1,6 +1,6 @@
 
 {
-	"name": "music-asker",
+	"name": "fifo-player",
 	"main": "index.html",
 	"window": {
 		"frame": false,
