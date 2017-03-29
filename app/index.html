@@ -184,7 +184,9 @@
 		},
 		"play-file": function () {
 			show_select_widow(function (file) {
-				current_player_process.kill('SIGTERM');
+				if(current_player_process){
+					current_player_process.kill('SIGTERM');
+				}
 				play(file);
 			}, current_dir, function (e) {return !e.isDirectory()});
 		},
