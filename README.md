@@ -1,9 +1,9 @@
-#Fifo-player
+# Fifo-player
 Mplayer wrapper.
 Application is controlled by named pipe.
 It uses config file for settings, config must place in folder with program with name `player-config.json`
 
-##Config example:
+## Config example:
 ```javascript
 {"music_directory": ".", 	// default directory with music
 "base_directory": ".", 		// in which directory start change-directory command
@@ -19,7 +19,7 @@ It uses config file for settings, config must place in folder with program with 
 }
 ```
 
-##Available commands:
+## Available commands:
  - `next` - start next random song
  - `pause` - pause player
  - `loop` - infinitely play current song / disable infinite loop
@@ -31,7 +31,7 @@ It uses config file for settings, config must place in folder with program with 
  - `increase-volume`
  - `decrease-volume`
 
-##Usage example:
+## Usage example:
 ```bash
 ... # your wmiirc
 # fifo-player fifo
@@ -50,5 +50,5 @@ Key Mod3-z
 	echo play-file > $PLAYER_FIFO_IN &
 ```
 
-##License
+## License
 This software is licensed under the [MIT license](LICENSE).
