@@ -19,7 +19,6 @@
 		var loop_enabled = false;
 		var list = null; // list object of list.js
 
-		var current_music_idx = -1;
 		var is_random_idx = true;
 
 		var playing = false;
@@ -29,7 +28,6 @@
 		 * @return {string[]}
 		 */
 		function music_list (path) {
-			current_music_idx = -1;
 			return $(fs.readdirSync(path)).filter(function (i,file) {
 				return !fs.lstatSync(path+file).isDirectory();
 			}).map(function (i, file) {
@@ -40,7 +38,7 @@
 		 * Writes current song name to file
 		 */
 		function write_song_name () {
-			var text = current_file;
+			var text = current_file.split("/").pop();
 			if(playing){
 				text = '[>] ' + text;
 			}else {
@@ -99,10 +97,10 @@
 		 * @param  {string} file_path
 		 */
 		function play (file_path) {
+			current_file = file_path;
 			playing = true;
 			loop_enabled = false;
 			var filename = file_path.split("/").pop();
-			current_file = filename;
 			// Write current song to sound bar
 			write_song_name();
 			var play_option;
@@ -130,7 +128,7 @@
 			if(is_random_idx){
 				return Math.floor(Math.random()*music.length);
 			}else {
-				return (current_music_idx + 1) % music.length;
+				return (music.indexOf(current_file) + 1) % music.length;
 			}
 		}
 		/**
@@ -144,11 +142,10 @@
 				var i = 0;
 				var new_music, new_music_filename;
 				do{
-					current_music_idx = next_idx();
-					new_music = music[current_music_idx];
+					new_music = music[next_idx()];
 					new_music_filename = new_music.split("/").pop();
 					++i;
-				}while(new_music_filename == current_file && i < 10);
+				}while(new_music_filename == current_file.split("/").pop() && i < 10);
 				play(new_music);
 			}
 		}
