@@ -150,7 +150,7 @@
 			}
 		}
 		function go_next () {
-			if(current_player_process){
+			if(current_player_process && current_player_process.exitCode == null){
 				current_player_process.kill('SIGKILL');
 			} else {
 				next();
