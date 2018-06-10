@@ -28,11 +28,12 @@
 		 * @return {string[]}
 		 */
 		function music_list (path) {
+			var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
 			return $(fs.readdirSync(path)).filter(function (i,file) {
 				return !fs.lstatSync(path+file).isDirectory();
 			}).map(function (i, file) {
 				return path+file;
-			}).get();
+			}).get().sort(collator.compare);
 		}
 		/**
 		 * Writes current song name to file
@@ -248,9 +249,10 @@
 		 */
 		function show_select_widow (fn, path, filter_fn) {
 			list.clear();
+			var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
 			$("#search-field").text("");
 			fs.readdir(path,function (err, files) {
-				files.forEach(function (file) {
+				files.sort(collator.compare).forEach(function (file) {
 					if(filter_fn(fs.lstatSync(path+file))){
 						list.add({name: file});
 					}
